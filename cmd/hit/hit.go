@@ -23,9 +23,11 @@ Usage:
 `
 
 func main() {
-	var config Config
+	var config Config = Config{
+		n: 100,
+		c: 1,
+	}
 	if err := ParseArgs(&config, os.Args[1:]); err != nil {
-		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Printf(

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"errors"
+	"flag"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -48,27 +48,61 @@ func durationVar(d *time.Duration) ParseFunc {
 }
 
 func ParseArgs(c *Config, args []string) error {
-	flagset := map[string]ParseFunc{
-		"url": stringVar(&c.url),
-		"n":   intVar(&c.n),
-		"c":   intVar(&c.c),
-		"rps": intVar(&c.rps),
+	// flagset := map[string]ParseFunc{
+	// 	"url": stringVar(&c.url),
+	// 	"n":   intVar(&c.n),
+	// 	"c":   intVar(&c.c),
+	// 	"rps": intVar(&c.rps),
+	// }
+
+	// for _, arg := range args {
+	// 	flgName, flgVal, ok := strings.Cut(arg, "=")
+	// 	if !ok {
+	// 		continue // when it is wrong flag format
+	// 	}
+	// 	flgName = strings.TrimPrefix(flgName, "-")
+	// 	flagParser, ok := flagset[flgName]
+	// 	if !ok {
+	// 		continue // when it is not a valid flag
+	// 	}
+	// 	err := flagParser(flgVal)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error parsing the flag %s=%s : %w", flgName, flgVal, err)
+	// 	}
+	// }
+	// return nil
+
+	fs := flag.NewFlagSet("hit", flag.ContinueOnError)
+
+	fs.StringVar(&c.url, "url", "", "Server URL to send the requests")
+	fs.Var(newPositiveIntValue(&c.n), "n", "Number of requests to send")
+	fs.Var(newPositiveIntValue(&c.c), "c", "Number of concurrent requests to send")
+	fs.Var(newPositiveIntValue(&c.rps), "rps", "Number of requests per second to send")
+
+	return fs.Parse(args)
+}
+
+type positiveIntValue int
+
+func newPositiveIntValue(p *int) *positiveIntValue {
+	return (*positiveIntValue)(p)
+}
+
+func (n *positiveIntValue) String() string {
+	return strconv.Itoa(int(*n))
+}
+
+func (n *positiveIntValue) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
+	if err != nil {
+		return err
 	}
 
-	for _, arg := range args {
-		flgName, flgVal, ok := strings.Cut(arg, "=")
-		if !ok {
-			continue // when it is wrong flag format
-		}
-		flgName = strings.TrimPrefix(flgName, "-")
-		flagParser, ok := flagset[flgName]
-		if !ok {
-			continue // when it is not a valid flag
-		}
-		err := flagParser(flgVal)
-		if err != nil {
-			return fmt.Errorf("error parsing the flag %s=%s : %w", flgName, flgVal, err)
-		}
+	if v <= 0 {
+		return errors.New("should be a positive integer")
 	}
+
+	*n = positiveIntValue(v)
+
 	return nil
 }
