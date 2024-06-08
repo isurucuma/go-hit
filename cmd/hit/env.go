@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/url"
 	"strconv"
 )
@@ -13,6 +14,13 @@ type Config struct {
 	n   int    // Number of requests to send
 	c   int    // Numebr of concurrent requests to send
 	rps int    // Number of requests per second to send
+}
+
+type env struct {
+	stdout io.Writer
+	stderr io.Writer
+	args   []string
+	dry    bool
 }
 
 // type ParseFunc func(string) error
@@ -48,7 +56,7 @@ type Config struct {
 // 	}
 // }
 
-func ParseArgs(c *Config, args []string) error {
+func ParseArgs(c *Config, args []string, stderr io.Writer) error {
 	// flagset := map[string]ParseFunc{
 	// 	"url": stringVar(&c.url),
 	// 	"n":   intVar(&c.n),
@@ -74,8 +82,9 @@ func ParseArgs(c *Config, args []string) error {
 	// return nil
 
 	fs := flag.NewFlagSet("hit", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "usage: %s [options] url\n", fs.Name)
+		fmt.Fprintf(fs.Output(), "usage: %s [options] url\n", fs.Name())
 		fs.PrintDefaults()
 	}
 
