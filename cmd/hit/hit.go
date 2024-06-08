@@ -14,14 +14,6 @@ const logo = `
    \ \__\ \__\ \__\   \ \__\    
     \|__|\|__|\|__|    \|__| `
 
-const usage = `
-Usage:
-	- url: Server URL to hit (required)
-	- n: Number of requests to send (default: 1)
-	- c: Number of concurrent requests to send (default: 1)
-	- rps: Number of requests per second to send (default: 1)	
-`
-
 func main() {
 	var config Config = Config{
 		n: 100,
