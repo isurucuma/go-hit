@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+
+	"github.com/isurucuma/go-hit"
 )
 
 const logo = `
@@ -31,6 +34,26 @@ func run(e *env) error {
 }
 
 func runHit(e *env, config *Config) error {
+	handleErr := func(err error) error {
+		if err != nil {
+			fmt.Fprintf(e.stderr, "\nerror occurred: %v\n", err)
+			return err
+		}
+		return nil
+	}
+
+	requset, err := http.NewRequest(http.MethodGet, config.url, http.NoBody)
+	if err != nil {
+		return handleErr(fmt.Errorf("new request: %w", err))
+	}
+
+	client := &hit.Client{
+		C: config.c,
+	}
+
+	sum := client.DO(requset, config.n)
+	sum.Fprint(e.stdout)
+
 	return nil
 }
 
