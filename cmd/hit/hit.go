@@ -48,10 +48,11 @@ func runHit(e *env, config *Config) error {
 	}
 
 	client := &hit.Client{
-		C: config.c,
+		C:   config.c,
+		RPS: config.rps,
 	}
 
-	sum := client.DO(requset, config.n)
+	sum := client.Do(requset, config.n)
 	sum.Fprint(e.stdout)
 
 	return nil

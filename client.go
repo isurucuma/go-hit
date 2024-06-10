@@ -1,7 +1,9 @@
 package hit
 
 import (
+	"context"
 	"net/http"
+	"runtime"
 	"time"
 )
 
@@ -12,14 +14,34 @@ type Client struct {
 }
 
 // Do sends n HTTP requests and returns an aggregated result
-func (c *Client) DO(r *http.Request, n int) Result {
+func (c *Client) Do(r *http.Request, n int) Result {
 	t := time.Now()
-
 	var sum Result
-	for range n {
-		// final report will include all the errors included, therefore skipping the errors in the result here
-		result, _ := Send(r)
+	for result := range c.do(r, n) {
 		sum = sum.Merge(result)
 	}
 	return sum.Finalize(time.Since(t))
+}
+
+func (c *Client) do(r *http.Request, n int) <-chan Result {
+	pipe := produce(n, func() *http.Request {
+		return r.Clone(context.TODO())
+	})
+
+	if c.RPS > 0 {
+		t := time.Second / time.Duration(c.RPS*c.concurrency())
+		pipe = throttle(pipe, t)
+	}
+	return split(pipe, c.concurrency(), func(r *http.Request) Result {
+		// skipping the error handling as it is already handled in the performance result summary
+		result, _ := Send(r)
+		return result
+	})
+}
+
+func (c *Client) concurrency() int {
+	if c.C > 0 {
+		return c.C
+	}
+	return runtime.NumCPU()
 }
