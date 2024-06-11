@@ -24,9 +24,7 @@ func (c *Client) Do(r *http.Request, n int) Result {
 }
 
 func (c *Client) do(r *http.Request, n int) <-chan Result {
-	pipe := produce(n, func() *http.Request {
-		return r.Clone(context.TODO())
-	})
+	pipe := produce(n, func() *http.Request { return r.Clone(context.TODO()) })
 
 	if c.RPS > 0 {
 		t := time.Second / time.Duration(c.RPS*c.concurrency())

@@ -8,6 +8,18 @@ import (
 	"time"
 )
 
+type Result struct {
+	RPS      float64
+	Requests int
+	Errors   int
+	Bytes    int64
+	Duration time.Duration
+	Fastest  time.Duration
+	Slowest  time.Duration
+	Status   int
+	Error    error
+}
+
 func (r Result) Merge(other Result) Result {
 	r.Requests++
 	r.Bytes += other.Bytes
