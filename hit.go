@@ -1,20 +1,31 @@
 package hit
 
 import (
+	"io"
 	"net/http"
 	"time"
 )
 
-func Send(r *http.Request) (Result, error) {
+func Send(c *http.Client, r *http.Request) (Result, error) {
 	t := time.Now()
 
-	time.Sleep(100 * time.Millisecond) // temperory for simulation process only
+	var (
+		code  int
+		bytes int64
+	)
+
+	response, err := c.Do(r)
+	if err == nil {
+		code = response.StatusCode
+		bytes, err = io.Copy(io.Discard, response.Body)
+		_ = response.Body.Close()
+	}
 
 	result := Result{
 		Duration: time.Since(t),
-		Bytes:    10,
-		Status:   http.StatusOK,
+		Bytes:    bytes,
+		Status:   code,
+		Error:    err,
 	}
-
-	return result, nil
+	return result, err
 }

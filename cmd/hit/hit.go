@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/isurucuma/go-hit"
 )
@@ -42,20 +46,33 @@ func runHit(e *env, config *Config) error {
 		return nil
 	}
 
+	const (
+		timeout           = 5 * time.Second
+		timeoutPerRequest = 30 * time.Second
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
+	defer cancel()
+	defer stop()
 	requset, err := http.NewRequest(http.MethodGet, config.url, http.NoBody)
 	if err != nil {
 		return handleErr(fmt.Errorf("new request: %w", err))
 	}
 
 	client := &hit.Client{
-		C:   config.c,
-		RPS: config.rps,
+		C:       config.c,
+		RPS:     config.rps,
+		Timeout: 30 * time.Second,
 	}
 
-	sum := client.Do(requset, config.n)
+	sum := client.Do(ctx, requset, config.n)
 	sum.Fprint(e.stdout)
 
-	return nil
+	if err = ctx.Err(); errors.Is(err, context.DeadlineExceeded) {
+		return handleErr(fmt.Errorf("timed out in %s", timeout))
+	}
+	return handleErr(err)
 }
 
 func main() {
