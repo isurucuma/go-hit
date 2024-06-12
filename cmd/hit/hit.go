@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -55,18 +54,23 @@ func runHit(e *env, config *Config) error {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 	defer stop()
-	requset, err := http.NewRequest(http.MethodGet, config.url, http.NoBody)
-	if err != nil {
-		return handleErr(fmt.Errorf("new request: %w", err))
-	}
+	// requset, err := http.NewRequest(http.MethodGet, config.url, http.NoBody)
+	// if err != nil {
+	// 	return handleErr(fmt.Errorf("new request: %w", err))
+	// }
 
-	client := &hit.Client{
-		C:       config.c,
-		RPS:     config.rps,
-		Timeout: 30 * time.Second,
-	}
+	// client := &hit.Client{
+	// 	C:       config.c,
+	// 	RPS:     config.rps,
+	// 	Timeout: 30 * time.Second,
+	// }
 
-	sum := client.Do(ctx, requset, config.n)
+	// sum := client.Do(ctx, requset, config.n)
+	sum, err := hit.SendN(ctx,
+		config.url,
+		config.n,
+		hit.Concurrency(10),
+		hit.RequestsPerSecond(20))
 	sum.Fprint(e.stdout)
 
 	if err = ctx.Err(); errors.Is(err, context.DeadlineExceeded) {

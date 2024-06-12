@@ -2,6 +2,7 @@ package hit
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"runtime"
 	"time"
@@ -9,9 +10,26 @@ import (
 
 // client sends HTTP requests and returns an aggregated result
 type Client struct {
-	C       int           // concurrency level
-	RPS     int           // no of requests per second
-	Timeout time.Duration // timeout per request
+	C         int               // concurrency level
+	RPS       int               // no of requests per second
+	Timeout   time.Duration     // timeout per request
+	Transport http.RoundTripper // use this to send the request and get the response
+}
+
+func (c *Client) client() *http.Client {
+	transport := c.Transport
+	if transport == nil {
+		transport = &http.Transport{
+			MaxIdleConnsPerHost: c.concurrency(),
+		}
+	}
+	return &http.Client{
+		Timeout: c.Timeout,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Transport: transport,
+	}
 }
 
 // Do sends n HTTP requests and returns an aggregated result
@@ -45,14 +63,46 @@ func (c *Client) concurrency() int {
 	return runtime.NumCPU()
 }
 
-func (c *Client) client() *http.Client {
-	return &http.Client{
-		Timeout: c.Timeout,
-		Transport: &http.Transport{
-			MaxIdleConnsPerHost: c.concurrency(),
-		},
-		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+// func (c *Client) client() *http.Client {
+// 	return &http.Client{
+// 		Timeout: c.Timeout,
+// 		Transport: &http.Transport{
+// 			MaxIdleConnsPerHost: c.concurrency(),
+// 		},
+// 		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+// 			return http.ErrUseLastResponse
+// 		},
+// 	}
+// }
+
+type Option func(*Client)
+
+func Concurrency(n int) Option {
+	return func(c *Client) {
+		c.C = n
 	}
+}
+
+func RequestsPerSecond(n int) Option {
+	return func(c *Client) {
+		c.RPS = n
+	}
+}
+
+func Timeout(d time.Duration) Option {
+	return func(c *Client) {
+		c.Timeout = d
+	}
+}
+
+func SendN(ctx context.Context, url string, n int, opts ...Option) (Result, error) {
+	r, err := http.NewRequest(http.MethodGet, url, http.NoBody)
+	if err != nil {
+		return Result{}, fmt.Errorf("new http request: %w", err)
+	}
+	var c Client
+	for _, o := range opts {
+		o(&c)
+	}
+	return c.Do(ctx, r, n), nil
 }
