@@ -20,7 +20,7 @@ func (c *Client) client() *http.Client {
 	transport := c.Transport
 	if transport == nil {
 		transport = &http.Transport{
-			MaxIdleConnsPerHost: c.concurrency(),
+			MaxIdleConnsPerHost: c.concurrency(), // otherwise by default http client keeps less number of idle connections in the pool
 		}
 	}
 	return &http.Client{
@@ -62,18 +62,6 @@ func (c *Client) concurrency() int {
 	}
 	return runtime.NumCPU()
 }
-
-// func (c *Client) client() *http.Client {
-// 	return &http.Client{
-// 		Timeout: c.Timeout,
-// 		Transport: &http.Transport{
-// 			MaxIdleConnsPerHost: c.concurrency(),
-// 		},
-// 		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-// 			return http.ErrUseLastResponse
-// 		},
-// 	}
-// }
 
 type Option func(*Client)
 

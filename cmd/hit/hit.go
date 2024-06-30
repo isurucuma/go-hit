@@ -25,14 +25,14 @@ func run(e *env) error {
 		n: 100,
 		c: 1,
 	}
-	if err := ParseArgs(&config, os.Args[1:], e.stderr); err != nil {
+	if err := ParseArgs(&config, e.args[1:], e.stderr); err != nil {
 		return err
 	}
-	fmt.Fprintf(e.stderr, "%s\n\nSending %d requests to %q (concurrency: %d)\n", logo, config.n, config.url, config.c)
+	fmt.Fprintf(e.stdout, "%s\n\nSending %d requests to %q (concurrency: %d)\n", logo, config.n, config.url, config.c)
 
-	if e.dry {
-		return nil
-	}
+	// if e.dry {
+	// 	return nil
+	// }
 	return runHit(e, &config)
 }
 
@@ -54,18 +54,7 @@ func runHit(e *env, config *Config) error {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 	defer stop()
-	// requset, err := http.NewRequest(http.MethodGet, config.url, http.NoBody)
-	// if err != nil {
-	// 	return handleErr(fmt.Errorf("new request: %w", err))
-	// }
 
-	// client := &hit.Client{
-	// 	C:       config.c,
-	// 	RPS:     config.rps,
-	// 	Timeout: 30 * time.Second,
-	// }
-
-	// sum := client.Do(ctx, requset, config.n)
 	sum, err := hit.SendN(ctx,
 		config.url,
 		config.n,
