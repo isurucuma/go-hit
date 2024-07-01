@@ -88,7 +88,7 @@ type Result struct {
 
 ## Pipeline
 
-![Pipeline architecture](https://lanecdr.org/wp-content/uploads/2019/08/placeholder.png)
+![Pipeline architecture](https://github.com/isurucuma/go-hit/blob/main/docs/pipeline.png)
 
 ### Contributing
 
