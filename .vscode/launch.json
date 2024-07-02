@@ -10,7 +10,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/cmd/hit",
-      "args": ["-c=10", "-rps=15", "-n=1000", "http://www.example.com"]
+      "args": ["-c=10", "-rps=15", "-n=1000", "-H=Content-Type: application/json", "-H=Authorization: Bearer YOUR_ACCESS_TOKEN", "http://www.example.com"]
     },
     {
       "name": "Attach to Process",
