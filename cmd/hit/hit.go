@@ -30,9 +30,9 @@ func run(e *env) error {
 	}
 	fmt.Fprintf(e.stdout, "%s\n\nSending %d requests to %q (concurrency: %d)\n", logo, config.n, config.url, config.c)
 
-	// if e.dry {
-	// 	return nil
-	// }
+	if e.dry {
+		return nil
+	}
 	return runHit(e, &config)
 }
 
