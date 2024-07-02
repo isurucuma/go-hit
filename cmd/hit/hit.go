@@ -57,6 +57,7 @@ func runHit(e *env, config *Config) error {
 
 	sum, err := hit.SendN(ctx,
 		config.url,
+		config.headers,
 		config.n,
 		hit.Concurrency(10),
 		hit.RequestsPerSecond(20))
