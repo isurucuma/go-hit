@@ -7,13 +7,15 @@ import (
 	"io"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
-	url string //Server URL to send the requests
-	n   int    // Number of requests to send
-	c   int    // Numebr of concurrent requests to send
-	rps int    // Number of requests per second to send
+	url     string            // Server URL to send the requests
+	n       int               // Number of requests to send
+	c       int               // Number of concurrent requests to send
+	rps     int               // Number of requests per second to send
+	headers map[string]string // HTTP headers to include in the requests
 }
 
 type env struct {
@@ -23,8 +25,13 @@ type env struct {
 	dry    bool
 }
 
-func ParseArgs(c *Config, args []string, stderr io.Writer) error {
+type positiveIntValue int
 
+type headersFlag struct {
+	headers map[string]string
+}
+
+func ParseArgs(c *Config, args []string, stderr io.Writer) error {
 	fs := flag.NewFlagSet("hit", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() {
@@ -36,11 +43,15 @@ func ParseArgs(c *Config, args []string, stderr io.Writer) error {
 	fs.Var(newPositiveIntValue(&c.c), "c", "Number of concurrent requests to send")
 	fs.Var(newPositiveIntValue(&c.rps), "rps", "Number of requests per second to send")
 
+	headers := &headersFlag{headers: make(map[string]string)}
+	fs.Var(headers, "H", "HTTP headers to include in the requests")
+
 	err := fs.Parse(args)
 	if err != nil {
 		return err
 	}
 	c.url = fs.Arg(0)
+	c.headers = headers.headers
 	if err := validateArgs(c); err != nil {
 		fmt.Fprintln(fs.Output(), err)
 		fs.Usage()
@@ -48,8 +59,6 @@ func ParseArgs(c *Config, args []string, stderr io.Writer) error {
 	}
 	return nil
 }
-
-type positiveIntValue int
 
 func newPositiveIntValue(p *int) *positiveIntValue {
 	return (*positiveIntValue)(p)
@@ -73,6 +82,25 @@ func (n *positiveIntValue) Set(s string) error {
 	return nil
 }
 
+func (h *headersFlag) String() string {
+	var result string
+	for k, v := range h.headers {
+		result += fmt.Sprintf("%s: %s\n", k, v)
+	}
+	return result
+}
+
+func (h *headersFlag) Set(s string) error {
+	parts := strings.SplitN(s, ":", 2)
+	if len(parts) != 2 {
+		return errors.New("invalid header format, should be 'Key: Value'")
+	}
+	key := strings.TrimSpace(parts[0])
+	value := strings.TrimSpace(parts[1])
+	h.headers[key] = value
+	return nil
+}
+
 func validateArgs(c *Config) error {
 	const urlArg = "url argument"
 
@@ -89,7 +117,6 @@ func validateArgs(c *Config) error {
 	}
 
 	return nil
-
 }
 
 func argError(value any, arg string, err error) error {
