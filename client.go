@@ -83,10 +83,13 @@ func Timeout(d time.Duration) Option {
 	}
 }
 
-func SendN(ctx context.Context, url string, n int, opts ...Option) (Result, error) {
+func SendN(ctx context.Context, url string, headers map[string]string, n int, opts ...Option) (Result, error) {
 	r, err := http.NewRequest(http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return Result{}, fmt.Errorf("new http request: %w", err)
+	}
+	for key, val := range headers {
+		r.Header.Add(key, val)
 	}
 	var c Client
 	for _, o := range opts {
