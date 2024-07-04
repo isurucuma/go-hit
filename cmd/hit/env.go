@@ -96,7 +96,9 @@ func (h *headersFlag) Set(s string) error {
 		return errors.New("invalid header format, should be 'Key: Value'")
 	}
 	key := strings.TrimSpace(parts[0])
+	key = strings.TrimPrefix(key, "\"")
 	value := strings.TrimSpace(parts[1])
+	value = strings.TrimSuffix(value, "\"")
 	h.headers[key] = value
 	return nil
 }

@@ -60,7 +60,7 @@ The `result` variable will contain the response times and other relevant informa
 If you prefer to use the command-line interface, you can run the `gohit` binary with the following arguments:
 
 ```
-./gohit -c=10 -n=1000 -rps=50 "http://www.some-web-page.com"
+./gohit -c=10 -rps=15 -H="Content-Type: application/json" -H="Authorization: Bearer YOUR_ACCESS_TOKEN" http://www.example.com
 ```
 
 Here, the arguments are:
@@ -68,6 +68,7 @@ Here, the arguments are:
 - `-c=10`: The concurrency level (represents the simulated number of parallel users).
 - `-n=1000`: The total number of requests to send.
 - `-rps=50`: The number of requests per second each simulated user is eligible to send.
+- `-H="Content-Type: application/json"`: The headers to include in the HTTP requests (possible to add multiple headers).
 - `"http://www.some-web-page.com"`: The URL to send the GET requests to.
 
 The end result will contain the following information:

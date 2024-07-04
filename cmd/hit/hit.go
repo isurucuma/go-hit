@@ -25,8 +25,13 @@ func run(e *env) error {
 		n: 100,
 		c: 1,
 	}
+	fmt.Println(e.args)
 	if err := ParseArgs(&config, e.args[1:], e.stderr); err != nil {
 		return err
+	}
+	for k, v := range config.headers {
+		fmt.Println(k)
+		fmt.Println(v)
 	}
 	fmt.Fprintf(e.stdout, "%s\n\nSending %d requests to %q (concurrency: %d)\n", logo, config.n, config.url, config.c)
 
